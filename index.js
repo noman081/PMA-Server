@@ -65,6 +65,10 @@ async function run() {
         })
 
         //user 
+        app.get('/user', async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users);
+        })
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
@@ -78,6 +82,21 @@ async function run() {
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
             res.send({ result, token });
         });
+        app.delete('/user/:email', async (req, res) => {
+
+        })
+        app.get('/supervisor/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const user = await userCollection.findOne(filter);
+            console.log(user);
+            if (user?.role === 'supervisor') {
+                return res.send({ supervisor: true });
+            }
+            else {
+                return res.send({ supervisor: false });
+            }
+        })
 
         //enroll a project
         app.post('/enroll/:id', async (req, res) => {
@@ -106,6 +125,13 @@ async function run() {
             res.send(result);
         })
 
+        //find enroll project
+        app.get('/enroll/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const result = await enrollmentCollection.find(filter).toArray();
+            res.send(result);
+        })
 
     }
     finally {
