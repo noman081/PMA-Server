@@ -15,7 +15,6 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
         await client.connect();
-        console.log('DB is connected...');
         const userCollection = client.db('PMA').collection('users');
         const projectCollection = client.db('PMA').collection('projects');
         const enrollmentCollection = client.db('PMA').collection('enrollments');
@@ -38,6 +37,32 @@ async function run() {
             const project = await projectCollection.findOne(filter);
             res.send(project);
         })
+        app.put('/project/accept/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const newState = 'In progress';
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    state: newState
+                },
+            };
+            const result = await projectCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+        })
+        app.put('/project/complete/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const newState = 'Completed';
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    state: newState
+                },
+            };
+            const result = await projectCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+        })
 
         //user 
         app.put('/user/:email', async (req, res) => {
@@ -56,6 +81,15 @@ async function run() {
 
         //enroll a project
         app.post('/enroll/:id', async (req, res) => {
+            const enroll = req.body;
+            const query = {
+                email: enroll.email,
+                project: enroll.project
+            }
+            const exists = await enrollmentCollection.findOne(query);
+            if (exists) {
+                return res.send({ success: false })
+            }
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
             const project = await projectCollection.findOne(filter);
@@ -68,7 +102,6 @@ async function run() {
                 },
             };
             await projectCollection.updateOne(filter, updateDoc, options);
-            const enroll = req.body;
             const result = await enrollmentCollection.insertOne(enroll);
             res.send(result);
         })
