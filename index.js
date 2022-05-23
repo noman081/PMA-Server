@@ -83,8 +83,13 @@ async function run() {
             res.send({ result, token });
         });
         app.delete('/user/:email', async (req, res) => {
-
+            const email = req.params.email;
+            const filter = { email: email };
+            const result = await userCollection.deleteOne(filter);
+            res.send(result);
         })
+
+        //supervisor check api
         app.get('/supervisor/:email', async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
